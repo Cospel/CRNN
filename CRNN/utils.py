@@ -22,7 +22,7 @@ def sparse_tuple_from(sequences, dtype=np.int32):
 
     return indices, values, shape
 
-def resize_image(image, input_width):
+def resize_image(image, input_width, height):
     """
         Resize an image to the "good" input size
     """
@@ -32,11 +32,11 @@ def resize_image(image, input_width):
     if c > input_width:
         c = input_width
         ratio = float(input_width) / c
-        final_arr = imresize(im_arr, (int(32 * ratio), input_width))
+        final_arr = imresize(im_arr, (int(height * ratio), input_width))
     else:
-        final_arr = np.zeros((32, input_width))
-        ratio = 32.0 / r
-        im_arr_resized = imresize(im_arr, (32, int(c * ratio)))
+        final_arr = np.zeros((height, input_width))
+        ratio = float(height) / r
+        im_arr_resized = imresize(im_arr, (height, int(c * ratio)))
         final_arr[:, 0:min(input_width,np.shape(im_arr_resized)[1])] = im_arr_resized[:, 0:input_width]
     return final_arr, c
 

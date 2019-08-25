@@ -69,6 +69,14 @@ def parse_arguments():
         default=100
     )
     parser.add_argument(
+        "-ih",
+        "--image_height",
+        type=int,
+        nargs="?",
+        help="Height of an example",
+        default=32
+    )
+    parser.add_argument(
         "-r",
         "--restore",
         action="store_true",
@@ -102,6 +110,7 @@ def main():
             args.model_path,
             args.examples_path,
             args.max_image_width,
+            args.image_height,
             args.train_test_ratio,
             args.restore,
             args.char_set_string
@@ -116,6 +125,7 @@ def main():
                 args.model_path,
                 args.examples_path,
                 args.max_image_width,
+                args.image_height,
                 0,
                 args.restore,
                 args.char_set_string

@@ -11,7 +11,7 @@ from utils import sparse_tuple_from, resize_image, label_to_array, ground_truth_
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 class CRNN(object):
-    def __init__(self, batch_size, model_path, examples_path, max_image_width, train_test_ratio, restore, char_set_string):
+    def __init__(self, batch_size, model_path, examples_path, max_image_width, image_height, train_test_ratio, restore, char_set_string):
         self.step = 0
         self.CHAR_VECTOR = char_set_string
         self.NUM_CLASSES = len(self.CHAR_VECTOR) + 1
@@ -40,7 +40,7 @@ class CRNN(object):
                 self.__cost,
                 self.__max_char_count,
                 self.__init
-            ) = self.crnn(max_image_width)
+            ) = self.crnn(max_image_width, image_height)
             self.__init.run()
 
         with self.__session.as_default():
@@ -55,9 +55,9 @@ class CRNN(object):
                     self.__saver.restore(self.__session, ckpt)
 
         # Creating data_manager
-        self.__data_manager = DataManager(batch_size, model_path, examples_path, max_image_width, train_test_ratio, self.__max_char_count, self.CHAR_VECTOR)
+        self.__data_manager = DataManager(batch_size, model_path, examples_path, max_image_width, image_height, train_test_ratio, self.__max_char_count, self.CHAR_VECTOR)
 
-    def crnn(self, max_width):
+    def crnn(self, max_width, height):
         def BidirectionnalRNN(inputs, seq_len):
             """
                 Bidirectionnal LSTM Recurrent Neural Network part
@@ -90,6 +90,7 @@ class CRNN(object):
             """
                 Convolutionnal Neural Network part
             """
+            ratio = height / 32
 
             # 64 / 3 x 3 / 1 / 1
             conv1 = tf.layers.conv2d(inputs=inputs, filters = 64, kernel_size = (3, 3), padding = "same", activation=tf.nn.relu)
@@ -125,7 +126,7 @@ class CRNN(object):
             conv6 = tf.layers.conv2d(inputs=bnorm2, filters = 512, kernel_size = (3, 3), padding = "same", activation=tf.nn.relu)
 
             # 1 x 2 / 2
-            pool4 = tf.layers.max_pooling2d(inputs=conv6, pool_size=[2, 2], strides=[1, 2], padding="same")
+            pool4 = tf.layers.max_pooling2d(inputs=conv6, pool_size=[2*ratio, 2*ratio], strides=[1, 2*ratio], padding="same")
 
             # 512 / 2 x 2 / 1 / 0
             conv7 = tf.layers.conv2d(inputs=pool4, filters = 512, kernel_size = (2, 2), padding = "valid", activation=tf.nn.relu)
@@ -133,7 +134,7 @@ class CRNN(object):
             return conv7
 
         batch_size = None
-        inputs = tf.placeholder(tf.float32, [batch_size, max_width, 32, 1], name="input")
+        inputs = tf.placeholder(tf.float32, [batch_size, max_width, height, 1], name="input")
 
         # Our target output
         targets = tf.sparse_placeholder(tf.int32, name='targets')
@@ -143,7 +144,10 @@ class CRNN(object):
 
         cnn_output = CNN(inputs)
         reshaped_cnn_output = tf.squeeze(cnn_output, [2])
-        max_char_count = cnn_output.get_shape().as_list()[1] 
+        max_char_count = cnn_output.get_shape().as_list()[1]
+
+        print("Shape from CNN:", cnn_output.get_shape().as_list())
+        print("MAX char count that can be detected:", max_char_count)
 
         crnn_model = BidirectionnalRNN(reshaped_cnn_output, seq_len)
 
@@ -208,7 +212,6 @@ class CRNN(object):
                 self.save_frozen_model("save/frozen.pb")
 
                 print('[{}] Iteration loss: {} Error rate: {}'.format(self.step, iter_loss, acc))
-
                 self.step += 1
         return None
 

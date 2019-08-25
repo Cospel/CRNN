@@ -7,7 +7,7 @@ from utils import sparse_tuple_from, resize_image, label_to_array
 from scipy.misc import imsave
 
 class DataManager(object):
-    def __init__(self, batch_size, model_path, examples_path, max_image_width, train_test_ratio, max_char_count, char_vector):
+    def __init__(self, batch_size, model_path, examples_path, max_image_width, height, train_test_ratio, max_char_count, char_vector):
         if train_test_ratio > 1.0 or train_test_ratio < 0:
             raise Exception('Incoherent ratio!')
 
@@ -16,6 +16,7 @@ class DataManager(object):
 
         self.train_test_ratio = train_test_ratio
         self.max_image_width = max_image_width
+        self.height = height
         self.batch_size = batch_size
         self.model_path = model_path
         self.current_train_offset = 0
@@ -43,7 +44,8 @@ class DataManager(object):
                 continue
             arr, initial_len = resize_image(
                 os.path.join(self.examples_path, f),
-                self.max_image_width
+                self.max_image_width,
+                self.height
             )
             examples.append(
                 (
@@ -84,7 +86,7 @@ class DataManager(object):
 
             batch_x = np.reshape(
                 np.array(raw_batch_x),
-                (len(raw_batch_x), self.max_image_width, 32, 1)
+                (len(raw_batch_x), self.max_image_width, self.height, 1)
             )
 
             train_batches.append((batch_y, batch_dt, batch_x))
@@ -117,7 +119,7 @@ class DataManager(object):
 
             batch_x = np.reshape(
                 np.array(raw_batch_x),
-                (len(raw_batch_x), self.max_image_width, 32, 1)
+                (len(raw_batch_x), self.max_image_width, self.height, 1)
             )
 
             test_batches.append((batch_y, batch_dt, batch_x))
