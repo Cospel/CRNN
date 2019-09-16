@@ -1,5 +1,6 @@
 import numpy as np
 import tensorflow as tf
+import imutils
 
 from scipy.misc import imread, imresize, imsave
 
@@ -22,13 +23,22 @@ def sparse_tuple_from(sequences, dtype=np.int32):
 
     return indices, values, shape
 
-def resize_image(image, input_width, height):
+def read_image(image):
+    """ 
+        Read Image with scipy im read method to grayscale.
+    """
+    im_arr = imread(image, mode='L')
+    r, c = np.shape(im_arr)
+    return im_arr, c
+
+def resize_image(im_arr, input_width, height):
     """
         Resize an image to the "good" input size
     """
-
-    im_arr = imread(image, mode='L')
+    # first resize image to height
+    im_arr = imutils.resize(im_arr, height=height)
     r, c = np.shape(im_arr)
+
     if c > input_width:
         c = input_width
         ratio = float(input_width) / c
