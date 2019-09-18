@@ -9,17 +9,21 @@ from skimage import img_as_ubyte
 import uuid
 from utils import sparse_tuple_from, resize_image, label_to_array, read_image
 
+from augmentor.long_numbers import MyAugmentor
 from scipy.misc import imsave
 
 class DataManager(object):
-    def __init__(self, batch_size, model_path, examples_path, max_image_width, height, train_test_ratio, max_char_count, char_vector):
+    def __init__(self, batch_size, model_path, examples_path, max_image_width, height, train_test_ratio, max_char_count, char_vector, test_augment_image):
         if train_test_ratio > 1.0 or train_test_ratio < 0:
             raise Exception('Incoherent ratio!')
 
         print(train_test_ratio)
         self.char_vector = char_vector
 
-        self.seq_augment = self.__create_augmentor()
+        self.test_augment_image = test_augment_image
+        if self.test_augment_image:
+            os.makedirs("augment", exist_ok=True)
+        self.augmentor = self.__create_augmentor()
         self.train_test_ratio = train_test_ratio
         self.max_image_width = max_image_width
         self.height = height
@@ -35,47 +39,7 @@ class DataManager(object):
         self.test_batches = self.__generate_all_test_batches()
 
     def __create_augmentor(self):
-        sometimes = lambda aug: iaa.Sometimes(0.5, aug)
-        seq = iaa.Sequential([
-            iaa.Multiply((0.6, 3.5), per_channel=0.5),
-            sometimes(iaa.PerspectiveTransform(scale=(0.01, 0.08))),
-            sometimes(
-                iaa.OneOf([
-                    iaa.CoarseDropout((0.03, 0.05), size_percent=(0.1, 0.3)),
-                    iaa.CoarseDropout((0.03, 0.1), size_percent=(0.1, 0.3), per_channel=1.0),
-                    iaa.Dropout((0.03,0.1)),
-                    iaa.Salt((0.03,0.1))
-                ])
-            ),
-            iaa.Multiply((0.6, 1.3), per_channel=0.5),
-            sometimes(iaa.FrequencyNoiseAlpha(
-                    exponent=(-4, 0),
-                    first=iaa.Multiply((0.8, 1.2), per_channel=0.5),
-                    second=iaa.ContrastNormalization((0.5, 3.0))
-                )
-            ),
-            sometimes(
-                iaa.OneOf([
-                    iaa.MotionBlur(k=(3,5),angle=(0, 360)),
-                    iaa.GaussianBlur((0, 1.3)),
-                    iaa.AverageBlur(k=(2, 4)),
-                    iaa.MedianBlur(k=(3, 7))
-                ])
-            ),
-            sometimes(
-                iaa.CropAndPad(
-                    percent=(-0.05, 0.15),
-                    pad_mode='constant',
-                    pad_cval=(0, 255)
-                ),
-            ),
-            sometimes(iaa.Add((-50, 50), per_channel=0.5)),
-            sometimes(iaa.ElasticTransformation(alpha=(1.0, 2.0), sigma=(2.0, 3.0))), # move pixels locally around (with random strengths)
-            sometimes(iaa.PiecewiseAffine(scale=(0.01, 0.02), mode='constant')), # sometimes move parts of the image around
-            sometimes(iaa.AdditiveGaussianNoise((0.02, 0.2))),
-            sometimes(iaa.AdditivePoissonNoise((0.02,0.1)))
-        ])
-        return seq
+        return MyAugmentor()
 
     def __load_data(self):
         """
@@ -110,7 +74,7 @@ class DataManager(object):
         images = []
         for image in image_batch:
             npimage = np.array(image, dtype=np.uint8)
-            agimage = self.seq_augment.augment_images([npimage])[0]
+            agimage = self.augmentor.seq.augment_images([npimage])[0]
             random_str = uuid.uuid4()
 
 
@@ -120,12 +84,13 @@ class DataManager(object):
             )
 
             # just for debug
-            # npimage, _ = resize_image(npimage,
-            #    self.max_image_width,
-            #    self.height
-            # )
-            # cv2.imwrite("augment/" + str(random_str) + "_0bf.jpg", npimage)
-            # cv2.imwrite("augment/" + str(random_str) + "_1ag.jpg", agimage)
+            if self.test_augment_image:
+                npimage, _ = resize_image(npimage,
+                    self.max_image_width,
+                    self.height
+                )
+                cv2.imwrite("augment/" + str(random_str) + "_0bf.jpg", npimage)
+                cv2.imwrite("augment/" + str(random_str) + "_1ag.jpg", agimage)
             images.append(agimage)
         return images
 
@@ -148,10 +113,7 @@ class DataManager(object):
             )
 
             batch_dt = sparse_tuple_from(
-                np.reshape(
-                    np.array(raw_batch_la),
-                    (-1)
-                )
+                np.asarray(raw_batch_la, dtype=np.object)
             )
 
             raw_batch_x = np.swapaxes(raw_batch_x, 1, 2)
@@ -183,10 +145,7 @@ class DataManager(object):
             )
 
             batch_dt = sparse_tuple_from(
-                np.reshape(
-                    np.array(raw_batch_la),
-                    (-1)
-                )
+                np.asarray(raw_batch_la, dtype=np.object)
             )
 
             raw_batch_x = np.swapaxes(raw_batch_x, 1, 2)

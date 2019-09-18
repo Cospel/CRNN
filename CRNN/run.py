@@ -90,6 +90,13 @@ def parse_arguments():
         help="The charset string",
         default=CHAR_VECTOR
     )
+    parser.add_argument(
+        "-tsa",
+        "--test_augment_image",
+        action="store_true",
+        help="Store the augment images (just to test if augmentation makes sense)",
+        default=False
+    )
     return parser.parse_args()
 
 def main():
@@ -113,9 +120,12 @@ def main():
             args.image_height,
             args.train_test_ratio,
             args.restore,
-            args.char_set_string
+            args.char_set_string,
+            args.test_augment_image
         )
 
+        if args.test_augment_image:
+            return
         crnn.train(args.iteration_count)
 
     if args.test:
@@ -128,9 +138,12 @@ def main():
                 args.image_height,
                 0,
                 args.restore,
-                args.char_set_string
+                args.char_set_string,
+                args.test_augment_image
             )
 
+        if args.test_augment_image:
+            return
         crnn.test()
 
 
