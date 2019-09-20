@@ -1,6 +1,8 @@
 import numpy as np
 import tensorflow as tf
 import imutils
+import cv2
+import random
 
 from scipy.misc import imread, imresize, imsave
 
@@ -35,20 +37,20 @@ def resize_image(im_arr, input_width, height):
     """
         Resize an image to the "good" input size
     """
-    # first resize image to height
     im_arr = imutils.resize(im_arr, height=height)
-    r, c = np.shape(im_arr)
+    r, c = im_arr.shape
 
-    if c > input_width:
+    if c > input_width or ((c - 30) > input_width and random.random() < 0.5):
         c = input_width
         ratio = float(input_width) / c
-        final_arr = imresize(im_arr, (int(height * ratio), input_width))
+        final_arr = cv2.resize(im_arr, (input_width, height))
     else:
         final_arr = np.zeros((height, input_width))
-        ratio = float(height) / r
-        im_arr_resized = imresize(im_arr, (height, int(c * ratio)))
-        final_arr[:, 0:min(input_width,np.shape(im_arr_resized)[1])] = im_arr_resized[:, 0:input_width]
+        im_arr_resized = im_arr
+        final_arr[:, 0 : np.shape(im_arr_resized)[1]] = im_arr_resized[:, 0 : np.shape(im_arr_resized)[1]]
+
     return final_arr, c
+
 
 def label_to_array(label, char_vector):
     try:
