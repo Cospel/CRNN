@@ -77,7 +77,6 @@ class DataManager(object):
             agimage = self.augmentor.seq.augment_images([npimage])[0]
             random_str = uuid.uuid4()
 
-
             agimage, _ = resize_image(agimage,
                 self.max_image_width,
                 self.height
