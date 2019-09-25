@@ -72,9 +72,9 @@ class DataManager(object):
                     label_to_array(f.split('_')[0], self.char_vector)
                 )
             )
-            imsave('blah.png', arr)
             count += 1
 
+        print("Loaded!")
         return examples, len(examples)
 
     def __augment_images(self, image_batch):
@@ -130,6 +130,7 @@ class DataManager(object):
             )
 
             train_batches.append((batch_y, batch_dt, batch_x))
+        print("Length of train batches", len(train_batches))
         return train_batches
 
     def __generate_all_test_batches(self):
@@ -162,4 +163,5 @@ class DataManager(object):
             )
 
             test_batches.append((batch_y, batch_dt, batch_x))
+        print("Length of test batches", len(test_batches))
         return test_batches

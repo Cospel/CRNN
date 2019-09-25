@@ -77,6 +77,14 @@ def parse_arguments():
         default=32
     )
     parser.add_argument(
+        "-lr",
+        "--learning_rate",
+        type=float,
+        nargs="?",
+        help="Default learning rate to start optimizing",
+        default=0.0001
+    )
+    parser.add_argument(
         "-r",
         "--restore",
         action="store_true",
@@ -121,7 +129,8 @@ def main():
             args.train_test_ratio,
             args.restore,
             args.char_set_string,
-            args.test_augment_image
+            args.test_augment_image,
+            args.learning_rate
         )
 
         if args.test_augment_image:
@@ -139,7 +148,8 @@ def main():
                 0,
                 args.restore,
                 args.char_set_string,
-                args.test_augment_image
+                args.test_augment_image,
+                args.learning_rate
             )
 
         if args.test_augment_image:

@@ -3,6 +3,8 @@ import time
 import random
 import numpy as np
 import tensorflow as tf
+
+from tqdm import tqdm
 from scipy.misc import imread, imresize, imsave
 from tensorflow.contrib import rnn
 
@@ -12,13 +14,15 @@ from utils import sparse_tuple_from, resize_image, label_to_array, ground_truth_
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 class CRNN(object):
-    def __init__(self, batch_size, model_path, examples_path, max_image_width, image_height, train_test_ratio, restore, char_set_string, test_augment_image):
+    def __init__(self, batch_size, model_path, examples_path, max_image_width, image_height, train_test_ratio, restore, char_set_string, test_augment_image, learning_rate):
         self.step = 0
         self.CHAR_VECTOR = char_set_string
         self.NUM_CLASSES = len(self.CHAR_VECTOR) + 1
 
         print(f"CHAR_VECTOR {self.CHAR_VECTOR}")
         print(f"NUM_CLASSES {self.NUM_CLASSES}")
+
+        self.__learning_rate = learning_rate
 
         self.__model_path = model_path
         self.__save_path = os.path.join(model_path, 'ckp')
@@ -168,7 +172,7 @@ class CRNN(object):
         cost = tf.reduce_mean(loss)
 
         # Training step
-        optimizer = tf.train.AdamOptimizer(learning_rate=0.0001).minimize(cost)
+        optimizer = tf.train.AdamOptimizer(learning_rate=self.__learning_rate).minimize(cost)
 
         # The decoded answer
         decoded, log_prob = tf.nn.ctc_beam_search_decoder(logits, seq_len, merge_repeated=False)
@@ -184,8 +188,11 @@ class CRNN(object):
     def train(self, iteration_count):
         with self.__session.as_default():
             print('Training')
+
             for i in range(self.step, iteration_count + self.step):
-                iter_loss = 0
+                iter_loss, k = 0, 0
+
+                pbar = tqdm(total=len(self.__data_manager.train_batches))
                 for batch_y, batch_dt, batch_x in self.__data_manager.train_batches:
                     op, decoded, loss_value, acc = self.__session.run(
                         [self.__optimizer, self.__decoded, self.__cost, self.__acc],
@@ -196,13 +203,22 @@ class CRNN(object):
                         }
                     )
 
-                    if i % 10 == 0:
+                    if k == len(self.__data_manager.train_batches)-1:
                         for j in range(2):
                             print('GT:', batch_y[j])
                             print('PREDICT:', ground_truth_to_word(decoded[j], self.CHAR_VECTOR))
                             print(f'---- {i} ----')
 
+                    pbar.update(1)
+                    k += 1
                     iter_loss += loss_value
+
+                    pbar.set_postfix(
+                      epoch=str(i)+'/'+str(iteration_count + self.step),
+                      step=str(k),
+                      cost="{:.2f}".format(iter_loss/float(k)),
+                    )
+
 
                 self.__saver.save(
                     self.__session,
