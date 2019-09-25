@@ -1,5 +1,6 @@
 import os
 import time
+import random
 import numpy as np
 import tensorflow as tf
 from scipy.misc import imread, imresize, imsave
@@ -209,6 +210,7 @@ class CRNN(object):
                     global_step=self.step
                 )
 
+                random.shuffle(self.__data_manager.train_batches)
                 self.save_frozen_model("save/frozen.pb")
 
                 print('[{}] Iteration loss: {} Error rate: {}'.format(self.step, iter_loss, acc))

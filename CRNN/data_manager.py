@@ -1,5 +1,6 @@
 import re
 import os
+import random
 import numpy as np
 import imgaug as ia
 import imgaug.augmenters as iaa
@@ -52,7 +53,13 @@ class DataManager(object):
 
         count = 0
         skipped = 0
-        for f in os.listdir(self.examples_path):
+
+        files = os.listdir(self.examples_path)
+
+        for i in range(10):
+            random.shuffle(files)
+
+        for f in files:
             if len(f.split('_')[0]) > self.max_char_count:
                 continue
             arr, initial_len = read_image(
