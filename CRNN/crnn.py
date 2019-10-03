@@ -14,7 +14,7 @@ from utils import sparse_tuple_from, resize_image, label_to_array, ground_truth_
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 class CRNN(object):
-    def __init__(self, batch_size, model_path, examples_path, max_image_width, image_height, train_test_ratio, restore, char_set_string, test_augment_image, learning_rate):
+    def __init__(self, batch_size, model_path, examples_path, max_image_width, image_height, train_test_ratio, restore, char_set_string, test_augment_image, learning_rate, blank_symbol):
         self.step = 0
         self.CHAR_VECTOR = char_set_string
         self.NUM_CLASSES = len(self.CHAR_VECTOR) + 1

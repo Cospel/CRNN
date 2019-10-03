@@ -47,10 +47,9 @@ class DataManager(object):
             Load all the images in the folder
         """
 
-        print('Loading data')
+        print('Loading data...')
 
         examples = []
-
         count = 0
         skipped = 0
 
@@ -118,6 +117,7 @@ class DataManager(object):
                 (-1)
             )
 
+
             batch_dt = sparse_tuple_from(
                 np.asarray(raw_batch_la, dtype=np.object)
             )
@@ -165,3 +165,4 @@ class DataManager(object):
             test_batches.append((batch_y, batch_dt, batch_x))
         print("Length of test batches", len(test_batches))
         return test_batches
+
