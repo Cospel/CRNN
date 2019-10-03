@@ -118,6 +118,9 @@ def main():
         print("If we are not training, and not testing, what is the point?")
 
     crnn = None
+    charset = sorted(args.char_set_string)
+    charset = ''.join(charset)
+    args.char_set_string = charset
 
     if args.train:
         crnn = CRNN(
