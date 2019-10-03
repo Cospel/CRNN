@@ -105,6 +105,14 @@ def parse_arguments():
         help="Store the augment images (just to test if augmentation makes sense)",
         default=False
     )
+    parser.add_argument(
+        "-sym",
+        "--blank_symbol",
+        type=str,
+        nargs="?",
+        help="Special symbol for blank characters",
+        defaut="/"
+    )
     return parser.parse_args()
 
 def main():
@@ -133,7 +141,8 @@ def main():
             args.restore,
             args.char_set_string,
             args.test_augment_image,
-            args.learning_rate
+            args.learning_rate,
+            args.blank_symbol
         )
 
         if args.test_augment_image:
@@ -152,11 +161,13 @@ def main():
                 args.restore,
                 args.char_set_string,
                 args.test_augment_image,
-                args.learning_rate
+                args.learning_rate,
+                args.blank_symbol
             )
 
         if args.test_augment_image:
             return
+
         crnn.test()
 
 
