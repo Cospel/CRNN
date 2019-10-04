@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import random
 import numpy as np
@@ -45,7 +46,7 @@ class CRNN(object):
                 self.__cost,
                 self.__max_char_count,
                 self.__init
-            ) = self.crnn(max_image_width, image_height)
+            ) = self.crnn(max_image_width, image_height, char_set_string)
             self.__init.run()
 
         with self.__session.as_default():
@@ -62,7 +63,7 @@ class CRNN(object):
         # Creating data_manager
         self.__data_manager = DataManager(batch_size, model_path, examples_path, max_image_width, image_height, train_test_ratio, self.__max_char_count, self.CHAR_VECTOR, test_augment_image)
 
-    def crnn(self, max_width, height):
+    def crnn(self, max_width, height, char_set_string):
         def BidirectionnalRNN(inputs, seq_len):
             """
                 Bidirectionnal LSTM Recurrent Neural Network part
@@ -96,6 +97,7 @@ class CRNN(object):
                 Convolutionnal Neural Network part
             """
             ratio = height / 32
+            char_set_constant = tf.constant(char_set_string)
 
             # 64 / 3 x 3 / 1 / 1
             conv1 = tf.layers.conv2d(inputs=inputs, filters = 64, kernel_size = (3, 3), padding = "same", activation=tf.nn.relu)
@@ -201,16 +203,17 @@ class CRNN(object):
                         [self.__optimizer, self.__decoded, self.__cost, self.__acc, self.__logits],
                         feed_dict={
                             self.__inputs: batch_x,
-                            self.__seq_len: [self.__max_char_count] * self.__data_manager.batch_size,
+                            #self.__seq_len: [self.__max_char_count] * self.__data_manager.batch_size,
                             self.__targets: batch_dt
                         }
                     )
 
-                    if k == len(self.__data_manager.train_batches)-1:
+                    if k > len(self.__data_manager.train_batches)-5:
                         for j in range(2):
                             print('GT:', batch_y[j])
                             print('PREDICT:', ground_truth_to_word(decoded[j], self.CHAR_VECTOR))
                             print(f'---- {i} ----')
+                            sys.stdout.flush()
 
                     pbar.update(1)
                     k += 1
@@ -244,7 +247,7 @@ class CRNN(object):
                     self.__decoded,
                     feed_dict={
                         self.__inputs: batch_x,
-                        self.__seq_len: [self.__max_char_count] * self.__data_manager.batch_size
+                        #self.__seq_len: [self.__max_char_count] * self.__data_manager.batch_size
                     }
                 )
 
