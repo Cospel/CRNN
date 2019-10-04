@@ -71,7 +71,7 @@ class DataManager(object):
                     label_to_array(f.split('_')[0], self.char_vector)
                 )
             )
-            print(f.split('_')[0], label_to_array(f.split('_')[0], self.char_vector))
+            #print(f.split('_')[0], label_to_array(f.split('_')[0], self.char_vector))
             count += 1
 
         print("Loaded!")
