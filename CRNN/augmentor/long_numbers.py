@@ -7,6 +7,8 @@ class MyAugmentor(object):
     def __init__(self):
         sometimes = lambda aug: iaa.Sometimes(0.5, aug)
         self.seq = iaa.Sequential([
+            sometimes(iaa.Crop(px=(0, 0, 8, 0), keep_size=True)),
+            sometimes(iaa.Pad(px=(0, 0, 0, 5), keep_size=False)),
             iaa.Multiply((0.8, 1.2), per_channel=0.5),
             sometimes(iaa.PerspectiveTransform(scale=(0.01, 0.05))),
             sometimes(
