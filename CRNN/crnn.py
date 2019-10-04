@@ -138,8 +138,7 @@ class CRNN(object):
 
             return conv7
 
-        batch_size = None
-        inputs = tf.placeholder(tf.float32, [batch_size, max_width, height, 1], name="input")
+        inputs = tf.placeholder(tf.float32, [None, max_width, height, 1], name="input")
 
         # Our target output
         targets = tf.sparse_placeholder(tf.int32, name='targets')
@@ -150,7 +149,9 @@ class CRNN(object):
         cnn_output = CNN(inputs)
         reshaped_cnn_output = tf.squeeze(cnn_output, [2])
         max_char_count = cnn_output.get_shape().as_list()[1]
+        batch_size = tf.shape(cnn_output)[0]
 
+        #tf.shape(x)[0]
         print("Shape from CNN:", cnn_output.get_shape().as_list())
         print("MAX char count that can be detected:", max_char_count)
 
@@ -167,7 +168,9 @@ class CRNN(object):
         logits = tf.transpose(logits, (1, 0, 2))
 
         # Loss and cost calculation
-        loss = tf.nn.ctc_loss(targets, logits, seq_len)
+        seq_len2 = tf.fill([batch_size], max_char_count)
+        loss = tf.nn.ctc_loss(targets, logits, seq_len2)# seq_len)
+        # loss = tf.nn.ctc_loss_v2(targets, logits, seq_len, seq_len)
 
         cost = tf.reduce_mean(loss)
 
@@ -194,8 +197,8 @@ class CRNN(object):
 
                 pbar = tqdm(total=len(self.__data_manager.train_batches))
                 for batch_y, batch_dt, batch_x in self.__data_manager.train_batches:
-                    op, decoded, loss_value, acc = self.__session.run(
-                        [self.__optimizer, self.__decoded, self.__cost, self.__acc],
+                    op, decoded, loss_value, acc, logits = self.__session.run(
+                        [self.__optimizer, self.__decoded, self.__cost, self.__acc, self.__logits],
                         feed_dict={
                             self.__inputs: batch_x,
                             self.__seq_len: [self.__max_char_count] * self.__data_manager.batch_size,

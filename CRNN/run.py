@@ -111,7 +111,7 @@ def parse_arguments():
         type=str,
         nargs="?",
         help="Special symbol for blank characters",
-        defaut="/"
+        default="/"
     )
     return parser.parse_args()
 
@@ -127,8 +127,11 @@ def main():
 
     crnn = None
     charset = sorted(args.char_set_string)
+    if args.blank_symbol in charset:
+        raise Exception("Please specify other blank symbol!")
+
     charset = ''.join(charset)
-    args.char_set_string = charset
+    args.char_set_string = charset + args.blank_symbol
 
     if args.train:
         crnn = CRNN(

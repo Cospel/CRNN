@@ -54,7 +54,8 @@ def resize_image(im_arr, input_width, height):
 
 def label_to_array(label, char_vector):
     try:
-        return [char_vector.index(x) for x in label if x in char_vector]
+        return [char_vector.index(x) if x in char_vector else char_vector.index("/") for x in label]
+        #return [char_vector.index(x) for x in label if x in char_vector]
     except Exception as ex:
         print("Error generating label to array")
         raise ex
