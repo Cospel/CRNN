@@ -23,7 +23,7 @@ class DataManager(object):
 
         self.test_augment_image = test_augment_image
         if self.test_augment_image:
-            os.makedirs("augment", exist_ok=True)
+            os.makedirs("augmentimages", exist_ok=True)
         self.augmentor = self.__create_augmentor()
         self.train_test_ratio = train_test_ratio
         self.max_image_width = max_image_width
@@ -71,7 +71,7 @@ class DataManager(object):
                     label_to_array(f.split('_')[0], self.char_vector)
                 )
             )
-            print(f.split('_')[0], label_to_array(f.split('_')[0], self.char_vector))
+            #print(f.split('_')[0], label_to_array(f.split('_')[0], self.char_vector))
             count += 1
 
         print("Loaded!")
@@ -95,8 +95,8 @@ class DataManager(object):
                     self.max_image_width,
                     self.height
                 )
-                cv2.imwrite("augment/" + str(random_str) + "_0bf.jpg", npimage)
-                cv2.imwrite("augment/" + str(random_str) + "_1ag.jpg", agimage)
+                cv2.imwrite("augmentimages/" + str(random_str) + "_0bf.jpg", npimage)
+                cv2.imwrite("augmentimages/" + str(random_str) + "_1ag.jpg", agimage)
             images.append(agimage)
         return images
 
