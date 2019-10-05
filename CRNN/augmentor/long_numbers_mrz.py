@@ -38,5 +38,6 @@ class MyAugmentor(object):
                 ),
             ),
             sometimes(iaa.AdditiveGaussianNoise((0.02, 0.1))),
-            sometimes(iaa.AdditivePoissonNoise((0.02,0.05)))
+            sometimes(iaa.AdditivePoissonNoise((0.02,0.05))),
+            iaa.Invert(p=0.5)
         ])

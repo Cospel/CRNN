@@ -44,5 +44,6 @@ class MyAugmentor(object):
             sometimes(iaa.ElasticTransformation(alpha=(1.0, 2.0), sigma=(2.0, 3.0))), # move pixels locally around (with random strengths)
             sometimes(iaa.PiecewiseAffine(scale=(0.01, 0.02), mode='constant')), # sometimes move parts of the image around
             sometimes(iaa.AdditiveGaussianNoise((0.02, 0.1))),
-            sometimes(iaa.AdditivePoissonNoise((0.02,0.05)))
+            sometimes(iaa.AdditivePoissonNoise((0.02,0.05))),
+            iaa.Invert(p=0.5)
         ])
