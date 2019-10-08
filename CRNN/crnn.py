@@ -15,7 +15,7 @@ from utils import sparse_tuple_from, resize_image, label_to_array, ground_truth_
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 class CRNN(object):
-    def __init__(self, batch_size, model_path, examples_path, max_image_width, image_height, train_test_ratio, restore, char_set_string, test_augment_image, learning_rate, blank_symbol):
+    def __init__(self, batch_size, model_path, examples_path, max_image_width, image_height, train_test_ratio, restore, char_set_string, test_augment_image, learning_rate, blank_symbol, augmentor):
         self.step = 0
         self.CHAR_VECTOR = char_set_string
         self.NUM_CLASSES = len(self.CHAR_VECTOR) + 1
@@ -61,7 +61,7 @@ class CRNN(object):
                     self.__saver.restore(self.__session, ckpt)
 
         # Creating data_manager
-        self.__data_manager = DataManager(batch_size, model_path, examples_path, max_image_width, image_height, train_test_ratio, self.__max_char_count, self.CHAR_VECTOR, test_augment_image)
+        self.__data_manager = DataManager(batch_size, model_path, examples_path, max_image_width, image_height, train_test_ratio, self.__max_char_count, self.CHAR_VECTOR, test_augment_image, augmentor)
 
     def crnn(self, max_width, height, char_set_string):
         def BidirectionnalRNN(inputs, seq_len):

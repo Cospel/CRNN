@@ -113,6 +113,13 @@ def parse_arguments():
         help="Special symbol for blank characters",
         default="/"
     )
+    parser.add_argument(
+        "-augmentor",
+        "--augmentor",
+        type=str,
+        nargs="?",
+        help="augmentor.small_numbers"
+    )
     return parser.parse_args()
 
 def main():
@@ -145,7 +152,8 @@ def main():
             args.char_set_string,
             args.test_augment_image,
             args.learning_rate,
-            args.blank_symbol
+            args.blank_symbol,
+            args.augmentor
         )
 
         if args.test_augment_image:
@@ -165,7 +173,8 @@ def main():
                 args.char_set_string,
                 args.test_augment_image,
                 args.learning_rate,
-                args.blank_symbol
+                args.blank_symbol,
+                args.augmentor
             )
 
         if args.test_augment_image:
