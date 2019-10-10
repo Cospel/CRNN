@@ -1,6 +1,7 @@
 import re
 import os
 import random
+import importlib
 import numpy as np
 import imgaug as ia
 import imgaug.augmenters as iaa
@@ -10,11 +11,10 @@ from skimage import img_as_ubyte
 import uuid
 from utils import sparse_tuple_from, resize_image, label_to_array, read_image
 
-from augmentor.long_numbers import MyAugmentor
 from scipy.misc import imsave
 
 class DataManager(object):
-    def __init__(self, batch_size, model_path, examples_path, max_image_width, height, train_test_ratio, max_char_count, char_vector, test_augment_image):
+    def __init__(self, batch_size, model_path, examples_path, max_image_width, height, train_test_ratio, max_char_count, char_vector, test_augment_image, augmentor):
         if train_test_ratio > 1.0 or train_test_ratio < 0:
             raise Exception('Incoherent ratio!')
 
@@ -24,7 +24,7 @@ class DataManager(object):
         self.test_augment_image = test_augment_image
         if self.test_augment_image:
             os.makedirs("augmentimages", exist_ok=True)
-        self.augmentor = self.__create_augmentor()
+        self.augmentor = self.__create_augmentor(augmentor)
         self.train_test_ratio = train_test_ratio
         self.max_image_width = max_image_width
         self.height = height
@@ -39,8 +39,9 @@ class DataManager(object):
         self.train_batches = self.__generate_all_train_batches()
         self.test_batches = self.__generate_all_test_batches()
 
-    def __create_augmentor(self):
-        return MyAugmentor()
+    def __create_augmentor(self, augmentor):
+        base_module = importlib.import_module(augmentor)
+        return base_module.MyAugmentor()
 
     def __load_data(self):
         """
