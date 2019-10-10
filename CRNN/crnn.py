@@ -152,12 +152,13 @@ class CRNN(object):
         reshaped_cnn_output = tf.squeeze(cnn_output, [2])
         max_char_count = cnn_output.get_shape().as_list()[1]
         batch_size = tf.shape(cnn_output)[0]
+        seq_len2 = tf.fill([batch_size], max_char_count)
 
         #tf.shape(x)[0]
         print("Shape from CNN:", cnn_output.get_shape().as_list())
         print("MAX char count that can be detected:", max_char_count)
 
-        crnn_model = BidirectionnalRNN(reshaped_cnn_output, seq_len)
+        crnn_model = BidirectionnalRNN(reshaped_cnn_output, seq_len2)#seq_len)
 
         logits = tf.reshape(crnn_model, [-1, 512])
         W = tf.Variable(tf.truncated_normal([512, self.NUM_CLASSES], stddev=0.1), name="W")
@@ -170,7 +171,6 @@ class CRNN(object):
         logits = tf.transpose(logits, (1, 0, 2))
 
         # Loss and cost calculation
-        seq_len2 = tf.fill([batch_size], max_char_count)
         loss = tf.nn.ctc_loss(targets, logits, seq_len2)# seq_len)
         # loss = tf.nn.ctc_loss_v2(targets, logits, seq_len, seq_len)
 
@@ -180,7 +180,7 @@ class CRNN(object):
         optimizer = tf.train.AdamOptimizer(learning_rate=self.__learning_rate).minimize(cost)
 
         # The decoded answer
-        decoded, log_prob = tf.nn.ctc_beam_search_decoder(logits, seq_len, merge_repeated=False)
+        decoded, log_prob = tf.nn.ctc_beam_search_decoder(logits, seq_len2, merge_repeated=False)
         dense_decoded = tf.sparse_tensor_to_dense(decoded[0], default_value=-1, name='dense_decoded')
 
         # The error rate
@@ -188,7 +188,7 @@ class CRNN(object):
 
         init = tf.global_variables_initializer()
 
-        return inputs, targets, seq_len, logits, dense_decoded, optimizer, acc, cost, max_char_count, init
+        return inputs, targets, seq_len2, logits, dense_decoded, optimizer, acc, cost, max_char_count, init
 
     def train(self, iteration_count):
         with self.__session.as_default():

@@ -10,7 +10,7 @@ from skimage import img_as_ubyte
 import uuid
 from utils import sparse_tuple_from, resize_image, label_to_array, read_image
 
-from augmentor.long_numbers_mrz import MyAugmentor
+from augmentor.long_numbers import MyAugmentor
 from scipy.misc import imsave
 
 class DataManager(object):
