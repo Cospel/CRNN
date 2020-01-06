@@ -45,7 +45,9 @@ class CRNN(object):
                 self.__acc,
                 self.__cost,
                 self.__max_char_count,
-                self.__init
+                self.__init,
+                self.__cost_len,
+                self.__output_len
             ) = self.crnn(max_image_width, image_height, char_set_string)
             self.__init.run()
 
@@ -154,7 +156,6 @@ class CRNN(object):
         batch_size = tf.shape(cnn_output)[0]
         seq_len2 = tf.fill([batch_size], max_char_count)
 
-        #tf.shape(x)[0]
         print("Shape from CNN:", cnn_output.get_shape().as_list())
         print("MAX char count that can be detected:", max_char_count)
 
@@ -174,21 +175,27 @@ class CRNN(object):
         loss = tf.nn.ctc_loss(targets, logits, seq_len2)# seq_len)
         # loss = tf.nn.ctc_loss_v2(targets, logits, seq_len, seq_len)
 
+        decoded, log_prob = tf.nn.ctc_beam_search_decoder(logits, seq_len2, merge_repeated=False)
+        dense_decoded = tf.sparse_tensor_to_dense(decoded[0], default_value=-1, name='dense_decoded')
+
+        length_size =  tf.fill([batch_size], 2.0)
+        output_length = tf.cast(tf.count_nonzero(tf.greater_equal(tf.cast(dense_decoded, tf.float32), 0.0), 1), tf.float32)
+        #bad_length = tf.identity(tf.cast(tf.shape(dense_decoded)[1], tf.float32))
+        cost_len = 0.1 * tf.reduce_sum(tf.abs(length_size-output_length), name="cost_len")
+
+        # USE this if your length output sequence is fixed
+        # cost = tf.reduce_mean(loss) + cost_len
         cost = tf.reduce_mean(loss)
 
         # Training step
         optimizer = tf.train.AdamOptimizer(learning_rate=self.__learning_rate).minimize(cost)
-
-        # The decoded answer
-        decoded, log_prob = tf.nn.ctc_beam_search_decoder(logits, seq_len2, merge_repeated=False)
-        dense_decoded = tf.sparse_tensor_to_dense(decoded[0], default_value=-1, name='dense_decoded')
 
         # The error rate
         acc = tf.reduce_mean(tf.edit_distance(tf.cast(decoded[0], tf.int32), targets))
 
         init = tf.global_variables_initializer()
 
-        return inputs, targets, seq_len2, logits, dense_decoded, optimizer, acc, cost, max_char_count, init
+        return inputs, targets, seq_len2, logits, dense_decoded, optimizer, acc, cost, max_char_count, init, output_length, cost_len
 
     def train(self, iteration_count):
         with self.__session.as_default():
@@ -199,14 +206,15 @@ class CRNN(object):
 
                 pbar = tqdm(total=len(self.__data_manager.train_batches))
                 for batch_y, batch_dt, batch_x in self.__data_manager.train_batches:
-                    op, decoded, loss_value, acc, logits = self.__session.run(
-                        [self.__optimizer, self.__decoded, self.__cost, self.__acc, self.__logits],
+                    op, decoded, loss_value, acc, logits, out_len, cost_len = self.__session.run(
+                        [self.__optimizer, self.__decoded, self.__cost, self.__acc, self.__logits, self.__output_len, self.__cost_len],
                         feed_dict={
                             self.__inputs: batch_x,
                             #self.__seq_len: [self.__max_char_count] * self.__data_manager.batch_size,
                             self.__targets: batch_dt
                         }
                     )
+                    # print('cost', out_len, cost_len, decoded)
 
                     if k > len(self.__data_manager.train_batches)-5:
                         for j in range(2):
