@@ -82,6 +82,10 @@ class DataManager(object):
         images = []
         for image in image_batch:
             npimage = np.array(image, dtype=np.uint8)
+
+            if self.max_image_width == self.height:
+                npimage = cv2.resize(npimage, (self.max_image_width, self.height))
+
             agimage = self.augmentor.seq.augment_images([npimage])[0]
             random_str = uuid.uuid4()
 
@@ -103,6 +107,7 @@ class DataManager(object):
 
     def __generate_all_train_batches(self):
         train_batches = []
+        k = 0
         while not self.current_train_offset + self.batch_size > self.test_offset:
             old_offset = self.current_train_offset
 
@@ -119,6 +124,10 @@ class DataManager(object):
                 (-1)
             )
 
+            k += 1
+
+            if self.test_augment_image and k > 10:
+                break
 
             batch_dt = sparse_tuple_from(
                 np.asarray(raw_batch_la, dtype=np.object)
@@ -137,6 +146,8 @@ class DataManager(object):
 
     def __generate_all_test_batches(self):
         test_batches = []
+        k = 0
+
         while not self.current_test_offset + self.batch_size > self.data_len:
             old_offset = self.current_test_offset
 
@@ -147,6 +158,12 @@ class DataManager(object):
             raw_batch_x, raw_batch_y, raw_batch_la = zip(*self.data[old_offset:new_offset])
 
             raw_batch_x = self.__augment_images(raw_batch_x)
+
+            k += 1
+
+            if self.test_augment_image and k > 10:
+                break
+
 
             batch_y = np.reshape(
                 np.array(raw_batch_y),
