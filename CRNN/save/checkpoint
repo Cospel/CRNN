@@ -1,2 +1,3 @@
-model_checkpoint_path: "ckp-50"
-all_model_checkpoint_paths: "ckp-50"
+model_checkpoint_path: "ckp-1"
+all_model_checkpoint_paths: "ckp-0"
+all_model_checkpoint_paths: "ckp-1"

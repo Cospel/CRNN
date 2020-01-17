@@ -204,8 +204,8 @@ class CRNN(object):
             for i in range(self.step, iteration_count + self.step):
                 iter_loss, k = 0, 0
 
-                pbar = tqdm(total=len(self.__data_manager.train_batches))
-                for batch_y, batch_dt, batch_x in self.__data_manager.train_batches:
+                pbar = tqdm(total=len(self.__data_manager.train_batches), ncols=150)
+                for batch_y, batch_dt, batch_x in self.__data_manager.__generate_all_train_batches():
                     op, decoded, loss_value, acc, logits, out_len, cost_len = self.__session.run(
                         [self.__optimizer, self.__decoded, self.__cost, self.__acc, self.__logits, self.__output_len, self.__cost_len],
                         feed_dict={
@@ -240,7 +240,6 @@ class CRNN(object):
                     global_step=self.step
                 )
 
-                random.shuffle(self.__data_manager.train_batches)
                 self.save_frozen_model("save/frozen.pb")
 
                 print('[{}] Iteration loss: {} Error rate: {}'.format(self.step, iter_loss, acc))
