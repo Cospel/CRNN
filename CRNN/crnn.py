@@ -23,8 +23,8 @@ class CRNN(object):
         print(f"CHAR_VECTOR {self.CHAR_VECTOR}")
         print(f"NUM_CLASSES {self.NUM_CLASSES}")
 
-        self.__learning_rate = learning_rate
-
+        self.__start_learning_rate = learning_rate
+        self.__learning_rate = tf.placeholder(tf.float32)
         self.__model_path = model_path
         self.__save_path = os.path.join(model_path, 'ckp')
 
@@ -46,8 +46,8 @@ class CRNN(object):
                 self.__cost,
                 self.__max_char_count,
                 self.__init,
-                self.__cost_len,
-                self.__output_len
+                self.__output_len,
+                self.__cost_len
             ) = self.crnn(max_image_width, image_height, char_set_string)
             self.__init.run()
 
@@ -105,7 +105,7 @@ class CRNN(object):
             conv1 = tf.layers.conv2d(inputs=inputs, filters = 64, kernel_size = (3, 3), padding = "same", activation=tf.nn.relu)
 
             # 2 x 2 / 1
-            pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[2, 2], strides=2)
+            pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[2, 2], strides=[2, 2])
 
             # 128 / 3 x 3 / 1 / 1
             conv2 = tf.layers.conv2d(inputs=pool1, filters = 128, kernel_size = (3, 3), padding = "same", activation=tf.nn.relu)
@@ -181,14 +181,16 @@ class CRNN(object):
         length_size =  tf.fill([batch_size], 2.0)
         output_length = tf.cast(tf.count_nonzero(tf.greater_equal(tf.cast(dense_decoded, tf.float32), 0.0), 1), tf.float32)
         #bad_length = tf.identity(tf.cast(tf.shape(dense_decoded)[1], tf.float32))
-        cost_len = 0.1 * tf.reduce_sum(tf.abs(length_size-output_length), name="cost_len")
+        #cost_len = 0.5 * tf.reduce_sum(tf.abs(length_size-output_length), name="cost_len")
+        cost_len = tf.reduce_mean(output_length)
 
         # USE this if your length output sequence is fixed
-        # cost = tf.reduce_mean(loss) + cost_len
-        cost = tf.reduce_mean(loss)
+        cost = tf.reduce_mean(loss) # + cost_len
+        #cost = tf.reduce_mean(loss)
 
         # Training step
         optimizer = tf.train.AdamOptimizer(learning_rate=self.__learning_rate).minimize(cost)
+        #optimizer = tf.train.RMSPropOptimizer(learning_rate=self.__learning_rate).minimize(cost)
 
         # The error rate
         acc = tf.reduce_mean(tf.edit_distance(tf.cast(decoded[0], tf.int32), targets))
@@ -197,24 +199,29 @@ class CRNN(object):
 
         return inputs, targets, seq_len2, logits, dense_decoded, optimizer, acc, cost, max_char_count, init, output_length, cost_len
 
-    def train(self, iteration_count):
+    def train(self, iteration_count, learning_rate_decay):
         with self.__session.as_default():
             print('Training')
 
             for i in range(self.step, iteration_count + self.step):
-                iter_loss, k = 0, 0
+                iter_loss, len_loss, k = 0, 0, 0
 
-                pbar = tqdm(total=len(self.__data_manager.train_batches))
+                if learning_rate_decay != 0 and i != 0 and i % learning_rate_decay == 0:
+                    self.__start_learning_rate *= 0.1
+
+                pbar = tqdm(total=len(self.__data_manager.train_batches), ncols=200)
                 for batch_y, batch_dt, batch_x in self.__data_manager.train_batches:
                     op, decoded, loss_value, acc, logits, out_len, cost_len = self.__session.run(
                         [self.__optimizer, self.__decoded, self.__cost, self.__acc, self.__logits, self.__output_len, self.__cost_len],
                         feed_dict={
                             self.__inputs: batch_x,
                             #self.__seq_len: [self.__max_char_count] * self.__data_manager.batch_size,
-                            self.__targets: batch_dt
+                            self.__targets: batch_dt,
+                            self.__learning_rate: self.__start_learning_rate
                         }
                     )
-                    # print('cost', out_len, cost_len, decoded)
+
+                    #print('cost', out_len, cost_len)
 
                     if k > len(self.__data_manager.train_batches)-5:
                         for j in range(2):
@@ -226,11 +233,14 @@ class CRNN(object):
                     pbar.update(1)
                     k += 1
                     iter_loss += loss_value
+                    len_loss += cost_len
 
                     pbar.set_postfix(
                       epoch=str(i)+'/'+str(iteration_count + self.step),
                       step=str(k),
                       cost="{:.2f}".format(iter_loss/float(k)),
+                      cost_len="{:.2f}".format(len_loss/float(k)),
+                      lr=str(self.__start_learning_rate)
                     )
 
 

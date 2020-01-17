@@ -83,8 +83,8 @@ class DataManager(object):
         for image in image_batch:
             npimage = np.array(image, dtype=np.uint8)
 
-            if self.max_image_width == self.height:
-                npimage = cv2.resize(npimage, (self.max_image_width, self.height))
+            #if self.max_image_width == self.height:
+            #    npimage = cv2.resize(npimage, (self.max_image_width, self.height))
 
             agimage = self.augmentor.seq.augment_images([npimage])[0]
             random_str = uuid.uuid4()
@@ -126,7 +126,7 @@ class DataManager(object):
 
             k += 1
 
-            if self.test_augment_image and k > 10:
+            if self.test_augment_image and k > 30:
                 break
 
             batch_dt = sparse_tuple_from(
@@ -161,7 +161,7 @@ class DataManager(object):
 
             k += 1
 
-            if self.test_augment_image and k > 10:
+            if self.test_augment_image and k > 30:
                 break
 
 
