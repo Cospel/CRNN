@@ -11,7 +11,7 @@ It is a Convolutional Recurrent Neural Network that can be used as an OCR
 - Tensorflow (tested with 1.8) `pip3 install tensorflow`
 - Scipy `pip3 install scipy`
 - Imutils
-- imaguag
+- imgaug
 
 ## What training data was used?
 

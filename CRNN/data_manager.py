@@ -108,6 +108,7 @@ class DataManager(object):
     def __generate_all_train_batches(self):
         train_batches = []
         k = 0
+        self.current_train_offset = 0
         while not self.current_train_offset + self.batch_size > self.test_offset:
             old_offset = self.current_train_offset
 
@@ -142,12 +143,13 @@ class DataManager(object):
 
             train_batches.append((batch_y, batch_dt, batch_x))
         print("Length of train batches", len(train_batches))
+        random.shuffle(train_batches)
         return train_batches
 
     def __generate_all_test_batches(self):
         test_batches = []
         k = 0
-
+        self.test_offset = int(train_test_ratio * self.data_len)
         while not self.current_test_offset + self.batch_size > self.data_len:
             old_offset = self.current_test_offset
 

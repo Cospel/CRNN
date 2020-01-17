@@ -85,6 +85,14 @@ def parse_arguments():
         default=0.0001
     )
     parser.add_argument(
+        "-lrd",
+        "--learning_rate_decay",
+        type=int,
+        nargs="?",
+        help="Decrease learning rate every X epoch by 10",
+        default=0
+    )
+    parser.add_argument(
         "-r",
         "--restore",
         action="store_true",
@@ -158,7 +166,7 @@ def main():
 
         if args.test_augment_image:
             return
-        crnn.train(args.iteration_count)
+        crnn.train(args.iteration_count, args.learning_rate_decay)
 
     if args.test:
         if crnn is None:
