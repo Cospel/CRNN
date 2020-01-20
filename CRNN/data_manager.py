@@ -36,7 +36,7 @@ class DataManager(object):
         self.data, self.data_len = self.__load_data()
         self.test_offset = int(train_test_ratio * self.data_len)
         self.current_test_offset = self.test_offset
-        self.train_batches = self.__generate_all_train_batches()
+        self.train_batches = self._generate_all_train_batches()
         self.test_batches = self.__generate_all_test_batches()
 
     def __create_augmentor(self, augmentor):
@@ -83,8 +83,8 @@ class DataManager(object):
         for image in image_batch:
             npimage = np.array(image, dtype=np.uint8)
 
-            #if self.max_image_width == self.height:
-            #    npimage = cv2.resize(npimage, (self.max_image_width, self.height))
+            if self.max_image_width == self.height:
+                npimage = cv2.resize(npimage, (self.max_image_width, self.height))
 
             agimage = self.augmentor.seq.augment_images([npimage])[0]
             random_str = uuid.uuid4()
@@ -105,7 +105,7 @@ class DataManager(object):
             images.append(agimage)
         return images
 
-    def __generate_all_train_batches(self):
+    def _generate_all_train_batches(self):
         train_batches = []
         k = 0
         self.current_train_offset = 0
@@ -149,7 +149,7 @@ class DataManager(object):
     def __generate_all_test_batches(self):
         test_batches = []
         k = 0
-        self.test_offset = int(train_test_ratio * self.data_len)
+        self.test_offset = int(self.train_test_ratio * self.data_len)
         while not self.current_test_offset + self.batch_size > self.data_len:
             old_offset = self.current_test_offset
 
