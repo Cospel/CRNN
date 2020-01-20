@@ -28,7 +28,7 @@ class MyAugmentor(object):
                 rotate=(-10, 10), # rotate by -45 to +45 degrees
                 mode=ia.ALL # use any of scikit-image's warping modes (see 2nd image from the top for examples)
             ),
-            #sometimes(iaa.PerspectiveTransform(scale=(0.01, 0.08))),
+            sometimes(iaa.PerspectiveTransform(scale=(0.01, 0.04))),
             sometimes(iaa.AdditiveGaussianNoise((0.02, 0.1))),
             sometimes(iaa.AdditivePoissonNoise((0.02,0.1))),
             #sometimes(iaa.Pad(
