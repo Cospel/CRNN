@@ -203,14 +203,14 @@ class CRNN(object):
         with self.__session.as_default():
             print('Training')
 
-            for i in range(self.step, iteration_count + self.step):
+            for i in range(iteration_count):
                 iter_loss, len_loss, k = 0, 0, 0
 
                 if learning_rate_decay != 0 and i != 0 and i % learning_rate_decay == 0:
                     self.__start_learning_rate *= 0.1
 
                 pbar = tqdm(total=len(self.__data_manager.train_batches), ncols=150)
-                for batch_y, batch_dt, batch_x in self.__data_manager.__generate_all_train_batches():
+                for batch_y, batch_dt, batch_x in self.__data_manager._generate_all_train_batches():
                     op, decoded, loss_value, acc, logits, out_len, cost_len = self.__session.run(
                         [self.__optimizer, self.__decoded, self.__cost, self.__acc, self.__logits, self.__output_len, self.__cost_len],
                         feed_dict={
@@ -236,7 +236,7 @@ class CRNN(object):
                     len_loss += cost_len
 
                     pbar.set_postfix(
-                      epoch=str(i)+'/'+str(iteration_count + self.step),
+                      epoch=str(i)+'/'+str(iteration_count),
                       step=str(k),
                       cost="{:.2f}".format(iter_loss/float(k)),
                       cost_len="{:.2f}".format(len_loss/float(k)),
